@@ -1,14 +1,15 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See LICENSE in the project root for license information.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
+// Simple shader mapping a YUV video feed without any lighting model.
 Shader "Video/YUVFeedShader (unlit)"
 {
     Properties
     {
         [Toggle(MIRROR)] _Mirror("Horizontal Mirror", Float) = 0
-        [HideInEditor][NoScaleOffset] _YPlane("Y plane", 2D) = "white" {}
-        [HideInEditor][NoScaleOffset] _UPlane("U plane", 2D) = "white" {}
-        [HideInEditor][NoScaleOffset] _VPlane("V plane", 2D) = "white" {}
+        [HideInEditor][NoScaleOffset] _YPlane("Y plane", 2D) = "black" {}
+        [HideInEditor][NoScaleOffset] _UPlane("U plane", 2D) = "gray" {}
+        [HideInEditor][NoScaleOffset] _VPlane("V plane", 2D) = "gray" {}
     }
     SubShader
     {
@@ -44,7 +45,7 @@ Shader "Video/YUVFeedShader (unlit)"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
-#if !UNITY_UV_STARTS_AT_TOP
+#if UNITY_UV_STARTS_AT_TOP
                 o.uv.y = 1 - v.uv.y;
 #endif
 #ifdef MIRROR

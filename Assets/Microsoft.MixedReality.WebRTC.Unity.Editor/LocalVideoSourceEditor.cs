@@ -1,5 +1,5 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See LICENSE in the project root for license information.
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
 using System;
 using UnityEditor;
@@ -18,12 +18,13 @@ namespace Microsoft.MixedReality.WebRTC.Unity.Editor
     public class LocalVideoSourceEditor : UnityEditor.Editor
     {
         SerializedProperty _peerConnection;
+        SerializedProperty _trackName;
         SerializedProperty _autoStartCapture;
         SerializedProperty _preferredVideoCodec;
         SerializedProperty _enableMixedRealityCapture;
         SerializedProperty _enableMrcRecordingIndicator;
         SerializedProperty _autoAddTrack;
-        SerializedProperty _mode;
+        SerializedProperty _formatMode;
         SerializedProperty _videoProfileId;
         SerializedProperty _videoProfileKind;
         SerializedProperty _constraints;
@@ -77,12 +78,13 @@ namespace Microsoft.MixedReality.WebRTC.Unity.Editor
         void OnEnable()
         {
             _peerConnection = serializedObject.FindProperty("PeerConnection");
+            _trackName = serializedObject.FindProperty("TrackName");
             _autoStartCapture = serializedObject.FindProperty("AutoStartCapture");
             _preferredVideoCodec = serializedObject.FindProperty("PreferredVideoCodec");
             _enableMixedRealityCapture = serializedObject.FindProperty("EnableMixedRealityCapture");
             _enableMrcRecordingIndicator = serializedObject.FindProperty("EnableMRCRecordingIndicator");
             _autoAddTrack = serializedObject.FindProperty("AutoAddTrack");
-            _mode = serializedObject.FindProperty("Mode");
+            _formatMode = serializedObject.FindProperty("FormatMode");
             _videoProfileId = serializedObject.FindProperty("VideoProfileId");
             _videoProfileKind = serializedObject.FindProperty("VideoProfileKind");
             _constraints = serializedObject.FindProperty("Constraints");
@@ -101,6 +103,7 @@ namespace Microsoft.MixedReality.WebRTC.Unity.Editor
 
             GUILayout.Space(10);
             EditorGUILayout.PropertyField(_peerConnection);
+            EditorGUILayout.PropertyField(_trackName);
             EditorGUILayout.PropertyField(_autoAddTrack);
             EditorGUILayout.PropertyField(_autoStartCapture);
 
@@ -184,8 +187,8 @@ namespace Microsoft.MixedReality.WebRTC.Unity.Editor
                 EditorGUILayout.PropertyField(_preferredVideoCodec);
             }
 
-            EditorGUILayout.PropertyField(_mode);
-            if ((LocalVideoSourceFormatMode)_mode.intValue == LocalVideoSourceFormatMode.Manual)
+            EditorGUILayout.PropertyField(_formatMode);
+            if ((LocalVideoSourceFormatMode)_formatMode.intValue == LocalVideoSourceFormatMode.Manual)
             {
                 ++EditorGUI.indentLevel;
 
@@ -195,7 +198,7 @@ namespace Microsoft.MixedReality.WebRTC.Unity.Editor
                 EditorGUILayout.IntSlider(_height, 0, 10000);
                 //EditorGUILayout.Slider(_framerate, 0.0, 60.0); //< TODO
 
-                if ((_videoProfileKind.intValue != (int)WebRTC.PeerConnection.VideoProfileKind.Unspecified) && (_videoProfileId.stringValue.Length > 0))
+                if ((_videoProfileKind.intValue != (int)VideoProfileKind.Unspecified) && (_videoProfileId.stringValue.Length > 0))
                 {
                     EditorGUILayout.HelpBox("Video profile ID is already unique. Specifying also a video kind over-constrains the selection algorithm and can decrease the chances of finding a matching video profile. It is recommended to select either a video profile kind, or a video profile ID (and leave the kind to Unspecified).", MessageType.Warning);
                 }
