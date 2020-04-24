@@ -308,5 +308,32 @@ namespace Microsoft.MixedReality.WebRTC.Unity
             lastGetComplete = false;
             StartCoroutine(CO_GetAndProcessFromServer());
         }
+
+        private void OnDisable()
+        {
+            StartCoroutine(DeleteServerRecordsForRemoteId());
+        }
+
+        /// <summary>
+        /// Internal helper for sending HTTP data to the node-dss server using POST
+        /// </summary>
+        /// <param name="msg">the message to send</param>
+        private IEnumerator DeleteServerRecordsForRemoteId()
+        {
+            if (RemotePeerId.Length == 0)
+            {
+                Debug.Log("Empty Remote peer ID; Skipping http DELETE");
+                yield break;
+            }
+
+            var www = new UnityWebRequest($"{HttpServerAddress}data/{RemotePeerId}", UnityWebRequest.kHttpVerbDELETE);
+            
+            yield return www.SendWebRequest();
+
+            if (AutoLogErrors && (www.isNetworkError || www.isHttpError))
+            {
+                Debug.Log($"Failed to delete data from server to remote peer {RemotePeerId}: {www.error}");
+            }
+        }
     }
 }
