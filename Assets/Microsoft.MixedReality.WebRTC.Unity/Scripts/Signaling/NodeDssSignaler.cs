@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -165,7 +166,9 @@ namespace Microsoft.MixedReality.WebRTC.Unity
                 throw new InvalidOperationException("Cannot send SDP message to remote peer; invalid empty remote peer ID.");
             }
 
-            var data = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(msg));
+            var json = JsonUtility.ToJson(msg);
+            Debug.Log($"Sending json: {json}");
+            var data = System.Text.Encoding.UTF8.GetBytes(json);
             var www = new UnityWebRequest($"{HttpServerAddress}data/{RemotePeerId}", UnityWebRequest.kHttpVerbPOST);
             www.uploadHandler = new UploadHandlerRaw(data);
 
@@ -189,6 +192,10 @@ namespace Microsoft.MixedReality.WebRTC.Unity
             mre.Set();
         }
 
+        private Queue<Message> candidateQueue = new Queue<Message>();
+
+        private bool setRemoteDesc = false;
+
         /// <summary>
         /// Internal coroutine helper for receiving HTTP data from the DSS server using GET
         /// and processing it as needed
@@ -211,6 +218,7 @@ namespace Microsoft.MixedReality.WebRTC.Unity
             if (!www.isNetworkError && !www.isHttpError)
             {
                 var json = www.downloadHandler.text;
+                Debug.Log($"Receiving json: {json}");
 
                 var msg = JsonUtility.FromJson<Message>(json);
 
@@ -224,17 +232,27 @@ namespace Microsoft.MixedReality.WebRTC.Unity
                     {
                         case Message.WireMessageType.Offer:
                             _nativePeer.SetRemoteDescriptionAsync("offer", msg.Data).Wait();
+                            setRemoteDesc = true;
                             // if we get an offer, we immediately send an answer
                             _nativePeer.CreateAnswer();
+                            GetCandidatesFromQueue();
                             break;
                         case Message.WireMessageType.Answer:
                             _ = _nativePeer.SetRemoteDescriptionAsync("answer", msg.Data);
+                            setRemoteDesc = true;
                             break;
                         case Message.WireMessageType.Ice:
                             // this "parts" protocol is defined above, in OnIceCandiateReadyToSend listener
-                            var parts = msg.Data.Split(new string[] { msg.IceDataSeparator }, StringSplitOptions.RemoveEmptyEntries);
-                            // Note the inverted arguments; candidate is last here, but first in OnIceCandiateReadyToSend
-                            _nativePeer.AddIceCandidate(parts[2], int.Parse(parts[1]), parts[0]);
+                            if (!setRemoteDesc)
+                            {
+                                candidateQueue.Enqueue(msg);
+                            }
+                            else
+                            {
+                                var parts = msg.Data.Split(new string[] { msg.IceDataSeparator }, StringSplitOptions.RemoveEmptyEntries);
+                                // Note the inverted arguments; candidate is last here, but first in OnIceCandiateReadyToSend
+                                _nativePeer.AddIceCandidate(parts[2], int.Parse(parts[1]), parts[0]);
+                            }
                             break;
                         //case SignalerMessage.WireMessageType.SetPeer:
                         //    // this allows a remote peer to set our text target peer id
@@ -267,6 +285,17 @@ namespace Microsoft.MixedReality.WebRTC.Unity
             }
 
             lastGetComplete = true;
+        }
+
+        private void GetCandidatesFromQueue()
+        {
+            while (candidateQueue.Count > 0)
+            {
+                var msg = candidateQueue.Dequeue();
+                var parts = msg.Data.Split(new string[] { msg.IceDataSeparator }, StringSplitOptions.RemoveEmptyEntries);
+                // Note the inverted arguments; candidate is last here, but first in OnIceCandiateReadyToSend
+                _nativePeer.AddIceCandidate(parts[2], int.Parse(parts[1]), parts[0]);
+            }
         }
 
         /// <summary>

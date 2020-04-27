@@ -308,7 +308,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &799132311
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -838,7 +838,12 @@ PrefabInstance:
     - target: {fileID: 8734329137356271696, guid: 94759df28537c86408a84858950de05a,
         type: 3}
       propertyPath: LocalPeerId
-      value: Andy
+      value: Bob
+      objectReference: {fileID: 0}
+    - target: {fileID: 8734329137356271696, guid: 94759df28537c86408a84858950de05a,
+        type: 3}
+      propertyPath: RemotePeerId
+      value: Alice
       objectReference: {fileID: 0}
     - target: {fileID: 8844783484497184051, guid: 94759df28537c86408a84858950de05a,
         type: 3}
